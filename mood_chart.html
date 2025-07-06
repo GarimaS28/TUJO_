@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mood Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <canvas id="moodChart" width="400" height="200"></canvas>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctx = document.getElementById('moodChart').getContext('2d');
+            const user_email = localStorage.getItem('user_email'); // Get the logged-in user's email
+
+            fetch(`http://localhost:5000/get_entries?user_email=${user_email}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Include the token for authentication
+                }
+            })
+            .then(response => response.json())
+            .then(entries => {
+                const moodCounts = {};
+
+                entries.forEach(entry => {
+                    const mood = entry.mood;
+                    if (mood in moodCounts) {
+                        moodCounts[mood]++;
+                    } else {
+                        moodCounts[mood] = 1;
+                    }
+                });
+
+                const labels = Object.keys(moodCounts);
+                const data = Object.values(moodCounts);
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '# of Entries',
+                            data: data,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching entries:", error);
+            });
+        });
+    </script>
+</body>
+</html>
